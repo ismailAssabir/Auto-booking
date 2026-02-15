@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { deconnecter } from '../features/auth/authSlice';
@@ -12,7 +12,21 @@ const DashboardChef = () => {
   const allCars = useSelector(state => state.cars.cars) || [];
   const allUsers = useSelector(state => state.users.users) || [];
   const currentUser = useSelector(state => state.auth.user);
-
+    useEffect(() => {
+        if (!currentUser) {
+          navigate("/login");
+          return;
+        }
+        if (currentUser.role !== "admin") {
+          if (currentUser.role === "client") {
+            navigate("/dashboard/client");
+          } else if (currentUser.role === "employee" || currentUser.role === "employe") {
+            navigate("/dashboard/personnel");
+          } else {
+            navigate("/login");
+          }
+        }
+      }, [currentUser, navigate]);
   const totalRevenue = allReservations
     .filter(res => res.status === 'confirmed')
     .reduce((acc, res) => {

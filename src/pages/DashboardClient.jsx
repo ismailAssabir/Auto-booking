@@ -11,7 +11,21 @@ const DashboardClient = () => {
   
   const allCars = useSelector((state) => state.cars.cars);
   const user = useSelector((state) => state.auth.user);
-
+   useEffect(() => {
+          if (!user) {
+            navigate("/login");
+            return;
+          }
+          if (user.role !== "client") {
+            if (user.role === "admin") {
+              navigate("/dashboard/chef");
+            } else if (user.role === "employee" || user.role === "employe") {
+              navigate("/dashboard/personnel");
+            } else {
+              navigate("/login");
+            }
+          }
+        }, [user, navigate]);
   // --- SÉCURITÉ : REDIRECTION SI NON-CLIENT ---
   useEffect(() => {
     // Si l'utilisateur n'est pas connecté ou n'est pas un client

@@ -12,7 +12,21 @@ const DashboardPerso = () => {
   const allUsers = useSelector((state) => state.users.users) || [];
   const allReservations = useSelector((state) => state.reservations.reservations) || [];
   const allCars = useSelector((state) => state.cars.cars) || [];
-
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+    if (!(currentUser.role === "employee" || currentUser.role === "employe")) {
+      if (currentUser.role === "client") {
+        navigate("/dashboard/client");
+      } else if (currentUser.role === "admin") {
+        navigate("/dashboard/chef");
+      } else {
+        navigate("/login");
+      }
+    }
+  }, [currentUser, navigate]);
   const [activeTab, setActiveTab] = useState("reservations");
   const [name, setName] = useState(currentUser?.name || "");
   const [previewAvatar, setPreviewAvatar] = useState(currentUser?.avatar || "");
