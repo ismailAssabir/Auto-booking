@@ -8,13 +8,11 @@ const DashboardChef = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // 1. Récupération des données globales du store
   const allReservations = useSelector(state => state.reservations.reservations) || [];
   const allCars = useSelector(state => state.cars.cars) || [];
   const allUsers = useSelector(state => state.users.users) || [];
   const currentUser = useSelector(state => state.auth.user);
 
-  // 2. Calcul des KPI (Indicateurs de performance)
   const totalRevenue = allReservations
     .filter(res => res.status === 'confirmed')
     .reduce((acc, res) => {
@@ -29,7 +27,6 @@ const DashboardChef = () => {
     { label: 'Total Clients', value: allUsers.filter(u => u.role === 'client').length, icon: '👥', color: 'text-info', bg: 'bg-info-subtle' },
   ];
 
-  // 3. Actions
   const handleLogout = () => {
     if (window.confirm("Voulez-vous quitter la session administrateur ?")) {
       dispatch(deconnecter());
@@ -46,18 +43,18 @@ const DashboardChef = () => {
   return (
     <div className="container-fluid py-4 bg-light min-vh-100">
       
-      {/* HEADER */}
+      {/* HEADER PRINCIPAL */}
       <div className="d-flex justify-content-between align-items-center mb-4 px-3">
         <div>
-          <h2 className="fw-bold mb-0">Dashboard Direction</h2>
-          <p className="text-muted">Bienvenue, M. {currentUser?.name}</p>
+          <h2 className="fw-bold mb-0 text-dark">Dashboard Direction 📊</h2>
+          <p className="text-muted small">Bienvenue, M. {currentUser?.name}</p>
         </div>
-        <button onClick={handleLogout} className="btn btn-outline-danger fw-bold rounded-pill px-4">
+        <button onClick={handleLogout} className="btn btn-outline-danger fw-bold rounded-pill px-4 shadow-sm">
           Déconnexion
         </button>
       </div>
 
-      {/* CARTES STATISTIQUES */}
+      {/* STATS CARDS */}
       <div className="row g-3 mb-4">
         {stats.map((stat, index) => (
           <div className="col-md-3" key={index}>
@@ -77,12 +74,18 @@ const DashboardChef = () => {
       </div>
 
       <div className="row g-4">
-        {/* TABLEAU DE GESTION DES UTILISATEURS */}
+        {/* GESTION DES UTILISATEURS */}
         <div className="col-lg-8">
           <div className="card border-0 shadow-sm rounded-4">
-            <div className="card-header bg-white py-3 border-0">
-              <h5 className="mb-0 fw-bold">👥 Gestion des Utilisateurs</h5>
+            
+            {/* EN-TETE AVEC LE NOUVEAU BOUTON AJOUTER */}
+            <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+              <h5 className="mb-0 fw-bold text-dark">👥 Liste des Utilisateurs</h5>
+              <Link to="/ajouterUser/admin" className="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <span className="me-1">+</span> Ajouter un Utilisateur
+              </Link>
             </div>
+
             <div className="table-responsive p-3">
               <table className="table align-middle table-hover">
                 <thead className="table-light">
@@ -100,11 +103,11 @@ const DashboardChef = () => {
                         <div className="d-flex align-items-center">
                           <img 
                             src={u.avatar || 'https://via.placeholder.com/40'} 
-                            className="rounded-circle me-3 border" 
+                            className="rounded-circle me-3 border shadow-sm" 
                             style={{width:'35px', height:'35px', objectFit:'cover'}} 
                             alt="avatar" 
                           />
-                          <span className="fw-semibold">{u.name}</span>
+                          <span className="fw-semibold text-dark">{u.name}</span>
                         </div>
                       </td>
                       <td>
@@ -115,17 +118,10 @@ const DashboardChef = () => {
                       <td className="text-muted small">{u.email}</td>
                       <td className="text-center">
                         <div className="btn-group">
-                          {/* LIEN DEMANDÉ : Redirige vers modifierUtilisateur avec ID et rôle admin */}
-                          <Link 
-                            to={`/modifierUtilisateur/${u.id}/admin`} 
-                            className="btn btn-sm btn-warning fw-bold mx-1 rounded"
-                          >
-                            ✏️ Modifier
+                          <Link to={`/modifierUtilisateur/${u.id}/admin`} className="btn btn-sm btn-warning fw-bold mx-1 rounded shadow-sm">
+                            ✏️
                           </Link>
-                          <button 
-                            onClick={() => handleDelete(u.id)}
-                            className="btn btn-sm btn-outline-danger mx-1 rounded"
-                          >
+                          <button onClick={() => handleDelete(u.id)} className="btn btn-sm btn-outline-danger mx-1 rounded shadow-sm">
                             🗑️
                           </button>
                         </div>
@@ -140,9 +136,9 @@ const DashboardChef = () => {
 
         {/* ÉTAT DE LA FLOTTE AUTO */}
         <div className="col-lg-4">
-          <div className="card border-0 shadow-sm rounded-4 mb-4">
+          <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-header bg-white py-3 border-0">
-              <h5 className="mb-0 fw-bold">🏎️ État de la Flotte</h5>
+              <h5 className="mb-0 fw-bold text-dark">🏎️ État de la Flotte</h5>
             </div>
             <div className="card-body">
               {['available', 'reserved', 'maintenance'].map((status) => {
@@ -153,7 +149,7 @@ const DashboardChef = () => {
                 return (
                   <div className="mb-4" key={status}>
                     <div className="d-flex justify-content-between mb-1">
-                      <span className="text-capitalize small fw-bold">{status}</span>
+                      <span className="text-capitalize small fw-bold text-muted">{status}</span>
                       <span className="small fw-bold">{count}</span>
                     </div>
                     <div className="progress" style={{height: '6px'}}>
@@ -163,25 +159,10 @@ const DashboardChef = () => {
                 );
               })}
               <hr />
-              <Link to="/gestionVoitures" className="btn btn-dark w-100 fw-bold py-2">
+              <Link to="/gestionVoitures" className="btn btn-dark w-100 fw-bold py-2 rounded-3 shadow-sm">
                 Gérer le parc automobile
               </Link>
             </div>
-          </div>
-
-          {/* RÉSUMÉ RÉSERVATIONS */}
-          <div className="card border-0 shadow-sm rounded-4 bg-primary text-white p-3">
-             <h6 className="fw-bold mb-3">Dernière réservation</h6>
-             {allReservations.length > 0 ? (
-               <div>
-                 <p className="small mb-1">
-                   Voiture ID: {allReservations[allReservations.length - 1].carId}
-                 </p>
-                 <p className="mb-0 fw-bold">Statut: {allReservations[allReservations.length - 1].status}</p>
-               </div>
-             ) : (
-               <p className="small mb-0">Aucune donnée disponible</p>
-             )}
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ import GestionVoitures from './components/gestionVoitures';
 import ModifierVoiture from './components/ModifierVoiture';
 import AjouterVoiture from './components/AjouterVoiture';
 import NotFound from './pages/NotFound';
+import AjouterUser from './components/AjouterUser';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/gestionVoitures" element={<GestionVoitures />} />
         <Route path="/modifierVoiture/:id" element={<ModifierVoiture />} />
         <Route path="/ajouterVoiture" element={<AjouterVoiture />} />
+        <Route path="/ajouterUser/:role" element={<AjouterUser />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>
