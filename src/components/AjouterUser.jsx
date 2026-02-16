@@ -6,9 +6,8 @@ import { addUser } from '../features/user/userSlice'; // Assurez-vous d'avoir ce
 const AjouterUser = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const {role} = useParams()
   const allUsers = useSelector((state) => state.users.users) || [];
-
+    const currentUser = useSelector((state) => state.auth.user);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,8 +37,6 @@ const AjouterUser = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Validation de l'email unique (optionnel mais recommandé)
     const emailExists = allUsers.some(u => u.email === formData.email);
     if (emailExists) {
       alert("Cet email est déjà utilisé par un autre compte.");
@@ -52,7 +49,7 @@ const AjouterUser = () => {
     dispatch(addUser({ ...formData, id: newId }));
     
     alert("Utilisateur créé avec succès !");
-    role === "admin" ? navigate('/dashboard/chef'):navigate("/dashboard/personnel")
+    currentUser.role === "admin" ? navigate('/dashboard/chef'):navigate("/dashboard/personnel")
   };
 
   return (
@@ -132,11 +129,11 @@ const AjouterUser = () => {
                     name="role" 
                     className="form-select rounded-3" 
                     onChange={handleChange}
-                    value={role=== "employee"? "client": formData.role}
-                    disabled={role === "employee"}
+                    value={currentUser.role=== "employee"? "client": formData.role}
+                    disabled={currentUser.role === "employee"}
                   >
                     <option value="client">Client</option>
-                    <option value="employe">Employé (Gestionnaire)</option>
+                    <option value="employee">Employé (Gestionnaire)</option>
                     <option value="admin">Administrateur (Chef)</option>
                   </select>
                 </div>

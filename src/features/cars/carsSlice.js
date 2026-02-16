@@ -9,19 +9,19 @@ const initialState = {
     name: "car",
     initialState,
     reducers:{
-        updateCar:(state, action)=>{
-            const car = state.cars.find(c=>c.id===action.payload.id);
-            return state.cars.map(c=>{
-                if(c.id === car.id){
-                    return action.payload
-                }
-                return c
-            })
+       updateCar: (state, action) => {
+            const { id, status } = action.payload;
+
+            const car = state.cars.find(car => car.id === id);
+
+            if (car) {
+                car.status = status;
+            }
         },
         updateCarData: (state, action) => {
                 const index = state.cars.findIndex(c => c.id === action.payload.id);
                 if (index !== -1) {
-                    state.cars[index] = action.payload;
+                    state.cars[index] = {...state.cars[index],...action.payload};
                 }
         },
         addCar: (state, action) => {

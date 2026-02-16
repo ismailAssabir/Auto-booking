@@ -139,7 +139,7 @@ const DashboardPerso = () => {
                 </tr>
               </thead>
               <tbody>
-                {allReservations.map((res) => (
+                {allReservations.filter(res => res.status !== "completed").map((res) => (
                   <tr key={res.id}>
                     <td className="fw-bold text-dark">{getCarDetails(res.carId)?.name || "Véhicule supprimé"}</td>
                     <td><small className="text-muted">{res.startDate} au {res.endDate}</small></td>
@@ -179,7 +179,7 @@ const DashboardPerso = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="mb-0 fw-bold">Gestion des Clients</h5>
             {/* LE BOUTON AJOUTER CLIENT */}
-            <Link to="/ajouterUser/employee" className="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+            <Link to="/ajouterUser" className="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
               + Nouveau Client
             </Link>
           </div>

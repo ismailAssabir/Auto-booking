@@ -4,7 +4,7 @@ export default function FormUser({data,handleSubmit, btnText}){
       <div className="col-md-4">
         <div className="card shadow">
           <div className="card-body">
-            <h2 className="card-title text-center mb-4">S'inscrire</h2>
+            <h2 className="card-title text-center mb-4">{btnText==="Modifier"? "Modifier l'utilisateur":"S'inscrire"}</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label className="form-label">Nom:</label>
@@ -20,7 +20,7 @@ export default function FormUser({data,handleSubmit, btnText}){
               </div>
               <div className="mb-3">
                 <label className="form-label">Votre image:</label>
-                <input type="file" className="form-control" name="image"  required/>
+                <input type="file" className="form-control" name="image"  required={btnText ==="Inscrire"}/>
               </div>
 
               <button type="submit" className="btn btn-primary w-100">

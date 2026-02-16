@@ -95,7 +95,7 @@ const DashboardChef = () => {
             {/* EN-TETE AVEC LE NOUVEAU BOUTON AJOUTER */}
             <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
               <h5 className="mb-0 fw-bold text-dark">👥 Liste des Utilisateurs</h5>
-              <Link to="/ajouterUser/admin" className="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+              <Link to="/ajouterUser" className="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
                 <span className="me-1">+</span> Ajouter un Utilisateur
               </Link>
             </div>

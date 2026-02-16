@@ -106,8 +106,8 @@ export default function Profil() {
                   </p>
 
                   <div className="mb-3">
-                    <small>📅 Du: {res.dateStart}</small><br />
-                    <small>📅 Au: {res.dateEnd}</small>
+                    <small>📅 Du: {res.startDate}</small><br />
+                    <small>📅 Au: {res.startDate}</small>
                   </div>
 
                   <span

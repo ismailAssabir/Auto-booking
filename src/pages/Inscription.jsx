@@ -31,11 +31,10 @@ export default function Inscription(){
 
             dispatch(addUser(newUser));
             dispatch(connecter(newUser));
+            navigate("/dashboard/client")
           };
 
           reader.readAsDataURL(file);
-
-          navigate("/dashboard/client")
     }
     return <FormUser btnText="Inscrire" handleSubmit={handleSubmit} data={
        {name: "",

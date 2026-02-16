@@ -23,18 +23,19 @@ const inspectionSlice = createSlice({
             }
             state.inspections.push(newInspection)
         },
-        retourCar: (state,action)=>{
-            const {id, data}= action.payload
-            const inspection = state.inspections.find(i=>i.id === id);
-            if(inspection){
-                inspection.retour={
-                    fuelLevel: data.fuelLevel,
-                    kilometrage: data.kilometrage,
-                    notes: data.notes,
-                    photos: data.photos || []
+        retourCar: (state, action) => {
+                const { id, data } = action.payload;
+                const inspection = state.inspections.find(i => i.reservationId === id);
+                if (inspection) {
+                    inspection.retour = {
+                        fuelLevel: data.fuelLevel,
+                        kilometrage: data.kilometrage,
+                        notes: data.notes,
+                        photos: data.photos || []
+                    };
                 }
             }
-        }
+
     }
 })
 export const {debutLivraision, retourCar} = inspectionSlice.actions

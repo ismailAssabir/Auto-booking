@@ -22,7 +22,7 @@ const DashboardClient = () => {
             } else if (user.role === "employee" || user.role === "employe") {
               navigate("/dashboard/personnel");
             } else {
-              navigate("/login");
+              navigate("/");
             }
           }
         }, [user, navigate]);
