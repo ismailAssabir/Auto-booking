@@ -18,6 +18,8 @@ import NotFound from './pages/NotFound';
 import AjouterUser from './components/AjouterUser';
 import RetourVoiture from './components/RetourVoiturs';
 import ReservationVoiture from './components/ReservationVoiture';
+import ReservationNow from './components/ReservationNow';
+import ForgetPassword from './components/ForgetPassword';
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
         <Route path="/ajouterUser" element={<AjouterUser />} />
         <Route path="/retourVoiture/:resId" element={<RetourVoiture />} />
         <Route path="/reservationVoiture/:id" element={<ReservationVoiture />} />
+        <Route path="/reservationNow/:id" element={<ReservationNow />} />
+        <Route path="/forget" element={<ForgetPassword />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>

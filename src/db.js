@@ -2,6 +2,7 @@
 export const users = [
   {
     id: 1,
+    phone: "0837272734",
     name: "Ismail Owner",
     email: "owner@carflex.com",
     password: "1234",
@@ -10,6 +11,7 @@ export const users = [
   },
   {
     id: 2,
+    phone: "0837272734",
     name: "Yassine Employee",
     email: "employee1@carflex.com",
     password: "1234",
@@ -18,6 +20,7 @@ export const users = [
   },
   {
     id: 3,
+    phone: "0837272734",
     name: "Sara Employee",
     email: "employee2@carflex.com",
     password: "1234",
@@ -26,6 +29,7 @@ export const users = [
   },
   {
     id: 4,
+    phone: "0837272734",
     name: "Ahmed Client",
     email: "client1@mail.com",
     password: "1234",
@@ -34,6 +38,7 @@ export const users = [
   },
   {
     id: 5,
+    phone: "0837272734",
     name: "Fatima Client",
     email: "client2@mail.com",
     password: "1234",
