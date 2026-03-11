@@ -20,6 +20,35 @@ const HomePage = () => {
   const user = useSelector((state) => state.auth.user);
   const allCars = useSelector((state) => state.cars.cars) || [];
 
+  // Fonction pour dédoublonner les voitures par nom
+  const getUniqueCars = () => {
+    const carMap = new Map();
+    
+    // Parcourir toutes les voitures
+    allCars.forEach(car => {
+      const carName = car.name;
+      
+      // Si la voiture n'existe pas encore dans la map, l'ajouter
+      if (!carMap.has(carName)) {
+        carMap.set(carName, car);
+      } else {
+        // Si elle existe déjà, vérifier le statut
+        const existingCar = carMap.get(carName);
+        // Si la voiture existante est disponible et que la nouvelle est réservée, garder la disponible
+        // Si la voiture existante est réservée et que la nouvelle est disponible, remplacer par la disponible
+        if (existingCar.status !== 'available' && car.status === 'available') {
+          carMap.set(carName, car);
+        }
+        // Si les deux sont réservées, garder la première
+        // Si les deux sont disponibles, garder la première (elles sont identiques)
+      }
+    });
+    
+    return Array.from(carMap.values());
+  };
+
+  const uniqueCars = getUniqueCars();
+
   // Action de déconnexion
   const handleLogout = () => {
     if (window.confirm("Voulez-vous vous déconnecter ?")) {
@@ -55,7 +84,9 @@ const HomePage = () => {
     dispatch(addContact({
       ...contactForm,
       userId: user?.id || null,
-      userAvatar: user?.avatar || null
+      userAvatar: user?.avatar || null,
+      date: new Date().toISOString(),
+      status: 'non lu'
     }));
 
     // Reset et fermeture
@@ -67,8 +98,129 @@ const HomePage = () => {
     }, 500);
   };
 
+  // Fonction pour obtenir la couleur du score
+  const getScoreColor = (score) => {
+    if (score >= 8) return 'success';
+    if (score >= 5) return 'warning';
+    return 'danger';
+  };
+
   return (
     <div className="bg-light min-vh-100">
+      {/* Styles personnalisés */}
+      <style jsx>{`
+        .car-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          cursor: pointer;
+          overflow: hidden;
+        }
+        
+        .car-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+        }
+        
+        .car-card .card-img-top {
+          transition: transform 0.5s ease;
+        }
+        
+        .car-card:hover .card-img-top {
+          transform: scale(1.05);
+        }
+        
+        .car-card .btn {
+          transition: all 0.3s ease;
+        }
+        
+        .car-card:hover .btn:not(.disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .car-card .badge {
+          transition: all 0.3s ease;
+        }
+        
+        .car-card:hover .badge {
+          transform: scale(1.02);
+        }
+
+        .service-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .service-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        }
+
+        .navbar {
+          backdrop-filter: blur(10px);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
+        }
+
+        .hero-wave {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          overflow: hidden;
+          line-height: 0;
+        }
+
+        .hero-wave svg {
+          position: relative;
+          display: block;
+          width: calc(100% + 1.3px);
+          height: 50px;
+        }
+
+        .hero-wave .shape-fill {
+          fill: #f8f9fa;
+        }
+
+        .bg-success-subtle {
+          background-color: rgba(25, 135, 84, 0.1);
+        }
+        
+        .bg-info-subtle {
+          background-color: rgba(13, 202, 240, 0.1);
+        }
+        
+        .bg-warning-subtle {
+          background-color: rgba(255, 193, 7, 0.1);
+        }
+        
+        .bg-danger-subtle {
+          background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .modal-content {
+          animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+          from {
+            transform: translateY(-50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
       {/* --- MODAL DE CONTACT --- */}
       {showContactModal && (
         <div 
@@ -76,9 +228,9 @@ const HomePage = () => {
           style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1050 }}
           onClick={() => !loading && setShowContactModal(false)}
         >
-          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content border-0 shadow-lg rounded-4">
-              <div className="modal-header bg-primary text-white border-0">
+              <div className="modal-header bg-primary text-white border-0 rounded-top-4">
                 <h5 className="modal-title fw-bold">
                   <i className="fas fa-headset me-2"></i>
                   Contactez-nous
@@ -92,71 +244,73 @@ const HomePage = () => {
               </div>
               <div className="modal-body p-4">
                 <form onSubmit={handleContactSubmit}>
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold">
-                      <i className="fas fa-user text-primary me-2"></i>
-                      Nom complet
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-lg rounded-3"
-                      value={contactForm.name}
-                      onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
-                      disabled={loading}
-                      placeholder="Jean Dupont"
-                      required
-                    />
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        <i className="fas fa-user text-primary me-2"></i>
+                        Nom complet
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control form-control-lg rounded-3"
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                        disabled={loading}
+                        placeholder="Jean Dupont"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        <i className="fas fa-envelope text-primary me-2"></i>
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        className="form-control form-control-lg rounded-3"
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                        disabled={loading}
+                        placeholder="jean@exemple.com"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">
+                        <i className="fas fa-tag text-primary me-2"></i>
+                        Sujet
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control form-control-lg rounded-3"
+                        value={contactForm.subject}
+                        onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
+                        disabled={loading}
+                        placeholder="Objet de votre message"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">
+                        <i className="fas fa-comment text-primary me-2"></i>
+                        Message
+                      </label>
+                      <textarea
+                        className="form-control form-control-lg rounded-3"
+                        rows="5"
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                        disabled={loading}
+                        placeholder="Votre message..."
+                        required
+                      ></textarea>
+                    </div>
                   </div>
 
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold">
-                      <i className="fas fa-envelope text-primary me-2"></i>
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      className="form-control form-control-lg rounded-3"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                      disabled={loading}
-                      placeholder="jean@exemple.com"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold">
-                      <i className="fas fa-tag text-primary me-2"></i>
-                      Sujet
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control form-control-lg rounded-3"
-                      value={contactForm.subject}
-                      onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
-                      disabled={loading}
-                      placeholder="Objet de votre message"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="form-label fw-semibold">
-                      <i className="fas fa-comment text-primary me-2"></i>
-                      Message
-                    </label>
-                    <textarea
-                      className="form-control form-control-lg rounded-3"
-                      rows="4"
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
-                      disabled={loading}
-                      placeholder="Votre message..."
-                      required
-                    ></textarea>
-                  </div>
-
-                  <div className="d-flex gap-2">
+                  <div className="d-flex gap-2 mt-4">
                     <button 
                       type="submit" 
                       className="btn btn-primary flex-grow-1 py-3 fw-bold rounded-3"
@@ -195,12 +349,12 @@ const HomePage = () => {
       )}
 
       {/* --- NAVIGATION --- */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary py-3 fixed-top shadow-lg">
+      <nav className="navbar navbar-expand-lg navbar-dark py-3 fixed-top shadow-lg">
         <div className="container">
           <Link className="navbar-brand fw-bold fs-3 d-flex align-items-center" to="/">
-            <div className="position-relative d-flex align-items-center justify-content-center bg-white shadow-sm me-3"
+            <div className="position-relative d-flex align-items-center justify-content-center bg-white shadow-sm me-3 animate-float"
                  style={{ width: "50px", height: "50px", borderRadius: "15px", border: "2px solid #ffc107" }}>
-              <img src="../logo.jpg" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src="/logo.jpg" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <span className="text-white">Auto<span className="text-warning">booking</span></span>
           </Link>
@@ -273,7 +427,7 @@ const HomePage = () => {
             Louez la liberté au Maroc
           </h1>
           <p className="lead fs-4 mb-4 opacity-75 animate__animated animate__fadeInUp">
-            Choisissez parmi plus de {allCars.length} véhicules récents au meilleur prix.
+            Choisissez parmi plus de {uniqueCars.length} modèles récents au meilleur prix.
           </p>
           {!user && (
             <Link to="/inscription" className="btn btn-warning btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg animate__animated animate__pulse animate__infinite">
@@ -281,12 +435,20 @@ const HomePage = () => {
             </Link>
           )}
         </div>
+
+        {/* Vague décorative */}
+        <div className="hero-wave">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
+          </svg>
+        </div>
+
         {/* Décoration */}
         <div className="position-absolute top-0 start-0 w-100 h-100">
-          <div className="position-absolute" style={{ top: '10%', left: '5%', opacity: '0.1', transform: 'rotate(-15deg)' }}>
+          <div className="position-absolute animate-float" style={{ top: '10%', left: '5%', opacity: '0.1', transform: 'rotate(-15deg)' }}>
             <i className="fas fa-car fa-10x"></i>
           </div>
-          <div className="position-absolute" style={{ bottom: '10%', right: '5%', opacity: '0.1', transform: 'rotate(15deg)' }}>
+          <div className="position-absolute animate-float" style={{ bottom: '10%', right: '5%', opacity: '0.1', transform: 'rotate(15deg)', animationDelay: '1s' }}>
             <i className="fas fa-key fa-10x"></i>
           </div>
         </div>
@@ -297,7 +459,7 @@ const HomePage = () => {
         <h2 className="text-center fw-bold mb-5">Nos Services</h2>
         <div className="row g-4">
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100 service-card">
               <div className="bg-primary bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
                 <i className="fas fa-shield-alt text-primary fa-3x"></i>
               </div>
@@ -306,7 +468,7 @@ const HomePage = () => {
             </div>
           </div>
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100 service-card">
               <div className="bg-success bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
                 <i className="fas fa-headset text-success fa-3x"></i>
               </div>
@@ -315,7 +477,7 @@ const HomePage = () => {
             </div>
           </div>
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center h-100 service-card">
               <div className="bg-warning bg-opacity-10 rounded-circle p-3 mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
                 <i className="fas fa-clock text-warning fa-3x"></i>
               </div>
@@ -332,32 +494,36 @@ const HomePage = () => {
           <div>
             <h2 className="fw-bold mb-0">🏎️ Notre Flotte Exclusive</h2>
             <p className="text-muted mb-0">Véhicules révisés et prêts pour la route.</p>
+            <p className="text-success small mt-1">
+              <i className="fas fa-info-circle me-1"></i>
+              Affichage par modèle unique - {uniqueCars.length} modèles disponibles
+            </p>
           </div>
           <span className="badge bg-primary px-4 py-2 rounded-pill">
-            {allCars.filter(c => c.status === 'available').length} disponibles
+            {uniqueCars.filter(c => c.status === 'available').length} disponibles
           </span>
         </div>
 
         <div className="row g-4">
-          {allCars.length === 0 ? (
+          {uniqueCars.length === 0 ? (
             <div className="col-12 text-center py-5">
               <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }}></div>
               <p className="text-muted">Chargement de la flotte...</p>
             </div>
           ) : (
-            allCars.map((car) => (
+            uniqueCars.map((car) => (
               <div key={car.id} className="col-lg-4 col-md-6">
-                <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden car-card">
                   <div className="position-relative">
                     <img 
-                      src={car.image || 'https://via.placeholder.com/400x250'} 
+                      src={car.image || 'https://images.unsplash.com/photo-1621255427184-7667792694a5?w=800&q=80'} 
                       className="card-img-top" 
                       alt={car.name} 
                       style={{ height: "220px", objectFit: "cover" }}
                     />
                     <div className="position-absolute top-0 end-0 m-3">
-                      <span className={`badge px-3 py-2 rounded-pill shadow ${car.status === 'available' ? 'bg-success' : 'bg-danger'}`}>
-                        {car.status === 'available' ? 'Disponible' : 'Louée'}
+                      <span className={`badge px-3 py-2 rounded-pill shadow ${car.status === 'available' ? 'bg-success' : 'bg-warning'}`}>
+                        {car.status === 'available' ? '● Disponible' : '● Réservé'}
                       </span>
                     </div>
                     {car.status === 'available' && (
@@ -372,9 +538,28 @@ const HomePage = () => {
 
                   <div className="card-body d-flex flex-column p-4">
                     <h5 className="fw-bold text-dark mb-1">{car.name}</h5>
+                    
+                  
+
                     <div className="d-flex gap-3 text-muted small mb-3">
                       <span><i className="fas fa-users me-1"></i> {car.seats} Places</span>
                       <span><i className="fas fa-cog me-1"></i> {car.transmission}</span>
+                      <span><i className="fas fa-gas-pump me-1"></i> {car.fuel || 'Essence'}</span>
+                    </div>
+                    
+                    <div className="d-flex gap-2 mb-3">
+                      {car.location && (
+                        <span className="badge bg-light text-dark rounded-pill">
+                          <i className="fas fa-map-marker-alt me-1"></i>
+                          {car.location}
+                        </span>
+                      )}
+                      {car.category && (
+                        <span className="badge bg-light text-dark rounded-pill">
+                          <i className="fas fa-tag me-1"></i>
+                          {car.category}
+                        </span>
+                      )}
                     </div>
                     
                     <div className="mt-auto d-flex justify-content-between align-items-center">
@@ -386,8 +571,16 @@ const HomePage = () => {
                       <button 
                         onClick={() => handleReserveClick(car.id)}
                         className={`btn btn-dark rounded-pill px-4 fw-bold ${car.status !== 'available' ? 'disabled opacity-50' : ''}`}
+                        disabled={car.status !== 'available'}
                       >
-                        {car.status === 'available' ? 'Réserver' : 'Indisponible'}
+                        {car.status === 'available' ? (
+                          <>
+                            <i className="fas fa-calendar-check me-2"></i>
+                            Réserver
+                          </>
+                        ) : (
+                          'Indisponible'
+                        )}
                       </button>
                     </div>
                   </div>
@@ -395,6 +588,36 @@ const HomePage = () => {
               </div>
             ))
           )}
+        </div>
+      </section>
+
+      {/* --- SECTION STATISTIQUES --- */}
+      <section className="container py-5">
+        <div className="row g-4">
+          <div className="col-md-3 col-6">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center">
+              <h3 className="fw-bold text-primary mb-2">{uniqueCars.length}+</h3>
+              <p className="text-muted mb-0">Modèles disponibles</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-6">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center">
+              <h3 className="fw-bold text-success mb-2">24/7</h3>
+              <p className="text-muted mb-0">Support client</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-6">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center">
+              <h3 className="fw-bold text-warning mb-2">10 ans</h3>
+              <p className="text-muted mb-0">D'expérience</p>
+            </div>
+          </div>
+          <div className="col-md-3 col-6">
+            <div className="card border-0 shadow-sm rounded-4 p-4 text-center">
+              <h3 className="fw-bold text-info mb-2">5000+</h3>
+              <p className="text-muted mb-0">Clients satisfaits</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -406,11 +629,19 @@ const HomePage = () => {
           <div className="row justify-content-center">
             <div className="col-md-6">
               <div className="input-group">
-                <input type="email" className="form-control form-control-lg rounded-start-3" placeholder="Votre email" />
+                <input 
+                  type="email" 
+                  className="form-control form-control-lg rounded-start-3 border-0" 
+                  placeholder="Votre email" 
+                />
                 <button className="btn btn-warning fw-bold px-5 rounded-end-3">
                   S'abonner
                 </button>
               </div>
+              <p className="text-white-50 small mt-2">
+                <i className="fas fa-lock me-1"></i>
+                Nous ne partageons jamais vos données
+              </p>
             </div>
           </div>
         </div>
@@ -491,6 +722,15 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Bouton flottant pour remonter */}
+      <button 
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-4 shadow-lg"
+        style={{ width: '50px', height: '50px' }}
+      >
+        <i className="fas fa-arrow-up"></i>
+      </button>
     </div>
   );
 };

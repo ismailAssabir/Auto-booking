@@ -169,7 +169,7 @@ export default function Profil() {
                   <label className="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 border border-2 border-white"
                          style={{ cursor: 'pointer' }}>
                     <i className="fas fa-camera text-white"></i>
-                    <input type="file" className="d-none" accept="image/*" onChange={handleImageChange} />
+                    <input type="file" className="d-none" accept="image/*" onChange={handleImageChange} />✏️
                   </label>
                 )}
               </div>

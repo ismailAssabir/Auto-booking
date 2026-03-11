@@ -11,7 +11,6 @@ import DashboardPerso from './pages/DashboardPerso';
 import ModifierUtilisateur from './components/ModifierUtilisateur';
 import InspectionVoiture from './components/InspectionVoiture';
 import DashboardChef from './pages/DashboardChef';
-import GestionVoitures from './components/gestionVoitures';
 import ModifierVoiture from './components/ModifierVoiture';
 import AjouterVoiture from './components/AjouterVoiture';
 import NotFound from './pages/NotFound';
@@ -36,7 +35,6 @@ function App() {
         <Route path="/inspectionVoiture/:resId" element={<InspectionVoiture />} />
         <Route path="/retourVoiture/:resId" element={<InspectionVoiture />} />
         <Route path="/dashboard/chef" element={<DashboardChef />} />
-        <Route path="/gestionVoitures" element={<GestionVoitures />} />
         <Route path="/modifierVoiture/:id" element={<ModifierVoiture />} />
         <Route path="/ajouterVoiture" element={<AjouterVoiture />} />
         <Route path="/ajouterUser" element={<AjouterUser />} />

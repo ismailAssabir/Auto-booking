@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
@@ -8,7 +9,7 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
     
     const isEditMode = btnText === "Modifier";
     const isRegisterMode = btnText === "Inscrire";
-
+    
     // Validation du formulaire
     const validateForm = (e) => {
         const form = e.target;
@@ -73,6 +74,20 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
     return (
         <div className="card border-0 shadow rounded-4">
             <div className="card-body p-4 p-lg-5">
+                
+                {/* Bouton retour pour le mode inscription - Positionné en haut à gauche */}
+                {isRegisterMode && (
+                    <div className="mb-4">
+                        <Link 
+                            to="/" 
+                            className="text-decoration-none text-secondary d-inline-flex align-items-center"
+                        >
+                            <i className="fas fa-arrow-left me-2"></i>
+                            <span>Retour à l'accueil</span>
+                        </Link>
+                    </div>
+                )}
+
                 {/* Aperçu de l'image */}
                 <div className="text-center mb-4">
                     <div className="position-relative d-inline-block">
@@ -87,6 +102,7 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
                                 </div>
                             )}
                         </div>
+                        
                         {isEditMode && (
                             <label className="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 border border-2 border-white"
                                    style={{ cursor: 'pointer' }}>
@@ -134,7 +150,7 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
                         />
                     </div>
 
-                    {/* Téléphone - NOUVEAU */}
+                    {/* Téléphone */}
                     <div className="mb-3">
                         <label className="form-label fw-semibold">
                             <i className="fas fa-phone text-primary me-2"></i>
@@ -159,7 +175,7 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
                                 Format: 06 12 34 56 78
                             </small>
                         )}
-                    </div>
+                    </div> 
 
                     {/* Mot de passe (optionnel en mode édition) */}
                     <div className="mb-4">
@@ -205,11 +221,11 @@ export default function FormUser({ data, handleSubmit, btnText, isLoading }) {
                         {isLoading ? (
                             <>
                                 <span className="spinner-border spinner-border-sm me-2"></span>
-                                Modification en cours...
+                                {isEditMode ? 'Modification' : 'Inscription'} en cours...
                             </>
                         ) : (
                             <>
-                                <i className="fas fa-save me-2"></i>
+                                <i className={`fas ${isEditMode ? 'fa-save' : 'fa-user-plus'} me-2`}></i>
                                 {btnText}
                             </>
                         )}

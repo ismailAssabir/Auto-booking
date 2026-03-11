@@ -20,11 +20,6 @@ export default function Inscription() {
         const password = e.target.pass.value;
         const phone = e.target.phone.value;
         const file = e.target.image?.files[0];
-
-        // Avatar par défaut (placeholder)
-        const defaultAvatar = "https://via.placeholder.com/150/0D6EFD/FFFFFF?text=User";
-
-        // Avatar avec initiales via UI Avatars
         const getInitialsAvatar = () => {
             const initials = name
                 .split(' ')

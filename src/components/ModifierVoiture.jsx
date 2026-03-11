@@ -15,12 +15,12 @@ const ModifierVoiture = () => {
 
   const [formData, setFormData] = useState({
     id: Number(id),
-    name: '',
-    pricePerDay: '',
-    transmission: 'Automatique',
-    seats: 5,
-    status: 'available',
-    image: ''
+    name: carToEdit.name,
+    pricePerDay: carToEdit.pricePerDay,
+    transmission: carToEdit.transmission,
+    seats: carToEdit.seats,
+    status: carToEdit.status,
+    image: carToEdit.image
   });
 
     if (!carToEdit) navigate('/gestionVoitures'); 

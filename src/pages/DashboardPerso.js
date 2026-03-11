@@ -45,6 +45,7 @@ const DashboardPerso = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Formatage automatique du numéro de téléphone
   const formatPhoneNumber = (value) => {
@@ -157,8 +158,20 @@ const DashboardPerso = () => {
     if (replyText.trim()) {
       dispatch(replyToContact({ 
         contactId: contact.id, 
-        reply: replyText 
+        reply: replyText,
+        date: new Date().toISOString()
       }));
+      
+      // Mettre à jour le contact sélectionné localement
+      const updatedContact = {
+        ...contact,
+        replies: [...(contact.replies || []), {
+          id: Date.now(),
+          message: replyText,
+          date: new Date().toISOString()
+        }]
+      };
+      setSelectedContact(updatedContact);
       
       setReplyText("");
       setAlert({ 
@@ -171,19 +184,40 @@ const DashboardPerso = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return "Aujourd'hui à " + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return "Hier à " + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } else {
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
   };
 
-  // Filtrage des contacts
+  // Filtrage et recherche des contacts
   const filteredContacts = contacts.filter(contact => {
-    if (filter === 'all') return true;
-    return contact.status === filter;
+    const matchesFilter = filter === 'all' || contact.status === filter;
+    const matchesSearch = searchTerm === '' || 
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  // Tri des contacts (non lus en premier, puis par date)
+  const sortedContacts = [...filteredContacts].sort((a, b) => {
+    if (a.status === 'non lu' && b.status !== 'non lu') return -1;
+    if (a.status !== 'non lu' && b.status === 'non lu') return 1;
+    return new Date(b.date) - new Date(a.date);
   });
 
   const unreadCount = contacts.filter(c => c.status === 'non lu').length;
@@ -342,7 +376,7 @@ const DashboardPerso = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {allReservations.filter(res => res.status !== "completed").map((res) => {
+                  {allReservations.filter(res => res.status !== "confirmed").map((res) => {
                     const car = getCarDetails(res.carId);
                     return (
                       <tr key={res.id}>
@@ -390,6 +424,7 @@ const DashboardPerso = () => {
                           )}
                         </td>
                       </tr>
+                        
                     );
                   })}
                 </tbody>
@@ -439,7 +474,7 @@ const DashboardPerso = () => {
                       <td className="text-muted">{u.phone || 'Non renseigné'}</td>
                       <td className="text-center">
                         <div className="d-flex gap-2 justify-content-center">
-                          <Link to={`/modifierUtilisateur/${u.id}`} className="btn btn-sm btn-warning rounded-pill px-3">
+                          <Link to={`/modifierUtilisateur/${u.id}/employee`} className="btn btn-sm btn-warning rounded-pill px-3">
                             <i className="fas fa-edit me-2"></i>
                             Modifier
                           </Link>
@@ -462,175 +497,307 @@ const DashboardPerso = () => {
           </div>
         )}
 
-        {/* TAB CONTENT: CONTACTS */}
+        {/* TAB CONTENT: CONTACTS - DESIGN ALTERNATIF PROFESSIONNEL */}
         {activeTab === "contacts" && (
           <div className="row g-4">
-            {/* Liste des contacts */}
-            <div className="col-md-5 col-lg-4">
-              <div className="card border-0 shadow-sm rounded-4">
-                <div className="card-header bg-white border-0 p-4">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+            {/* Colonne de gauche - Liste des messages sous forme de cartes */}
+            <div className="col-lg-5 col-xl-4">
+              <div className="card border-0 shadow-sm rounded-4 h-100">
+                <div className="card-header bg-white border-0 p-4 pb-0">
+                  <div className="d-flex justify-content-between align-items-center mb-4">
                     <h5 className="fw-bold mb-0">
-                      <i className="fas fa-envelope me-2 text-primary"></i>
-                      Messages reçus
+                      <i className="fas fa-inbox me-2 text-primary"></i>
+                      Boîte de réception
                     </h5>
-                    <span className="badge bg-primary rounded-pill">{contacts.length}</span>
+                    <div className="d-flex gap-2">
+                      <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2">
+                        <i className="fas fa-envelope me-1"></i> {contacts.length}
+                      </span>
+                      <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2">
+                        <i className="fas fa-envelope-open me-1"></i> {unreadCount} non lus
+                      </span>
+                    </div>
                   </div>
-                  
-                  {/* Filtres */}
-                  <div className="d-flex gap-2 flex-wrap">
-                    <button 
-                      className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-outline-primary'} rounded-pill`}
+
+                  {/* Barre de recherche améliorée */}
+                  <div className="position-relative mb-4">
+                    <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input
+                      type="text"
+                      className="form-control rounded-pill bg-light border-0 ps-5 py-2"
+                      placeholder="Rechercher par email ou sujet..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    {searchTerm && (
+                      <button 
+                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted"
+                        onClick={() => setSearchTerm("")}
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtres sous forme de badges cliquables */}
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    <span 
+                      className={`badge ${filter === 'all' ? 'bg-primary' : 'bg-light text-dark'} rounded-pill px-3 py-2 cursor-pointer`}
                       onClick={() => setFilter('all')}
+                      style={{ cursor: 'pointer' }}
                     >
-                      Tous
-                    </button>
-                    <button 
-                      className={`btn btn-sm ${filter === 'non lu' ? 'btn-warning' : 'btn-outline-warning'} rounded-pill position-relative`}
+                      <i className="fas fa-stream me-1"></i> Tous
+                    </span>
+                    <span 
+                      className={`badge ${filter === 'non lu' ? 'bg-warning' : 'bg-light text-dark'} rounded-pill px-3 py-2 cursor-pointer position-relative`}
                       onClick={() => setFilter('non lu')}
+                      style={{ cursor: 'pointer' }}
                     >
-                      Non lus
-                      {unreadCount > 0 && (
-                        <span className="badge bg-danger ms-1">{unreadCount}</span>
+                      <i className="fas fa-circle me-1"></i> Non lus
+                      {unreadCount > 0 && filter !== 'non lu' && (
+                        <span className="badge bg-danger rounded-pill ms-1">{unreadCount}</span>
                       )}
-                    </button>
-                    <button 
-                      className={`btn btn-sm ${filter === 'répondu' ? 'btn-success' : 'btn-outline-success'} rounded-pill`}
+                    </span>
+                    <span 
+                      className={`badge ${filter === 'répondu' ? 'bg-success' : 'bg-light text-dark'} rounded-pill px-3 py-2 cursor-pointer`}
                       onClick={() => setFilter('répondu')}
+                      style={{ cursor: 'pointer' }}
                     >
-                      Répondu
-                    </button>
+                      <i className="fas fa-check-circle me-1"></i> Répondu
+                    </span>
                   </div>
                 </div>
 
-                <div className="list-group list-group-flush" style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                  {filteredContacts.length === 0 ? (
-                    <div className="text-center py-5 text-muted">
-                      <i className="fas fa-inbox fa-3x mb-3"></i>
-                      <p>Aucun message trouvé</p>
+                <div className="card-body p-3" style={{ maxHeight: '650px', overflowY: 'auto' }}>
+                  {sortedContacts.length === 0 ? (
+                    <div className="text-center py-5">
+                      <div className="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                        <i className="fas fa-inbox fa-3x text-muted"></i>
+                      </div>
+                      <h6 className="text-muted">Aucun message trouvé</h6>
+                      <p className="text-muted small">Essayez de modifier vos filtres de recherche</p>
                     </div>
                   ) : (
-                    filteredContacts.map(contact => (
-                      <button
-                        key={contact.id}
-                        className={`list-group-item list-group-item-action border-0 p-3 ${selectedContact?.id === contact.id ? 'active' : ''}`}
-                        onClick={() => setSelectedContact(contact)}
-                      >
-                        <div className="d-flex justify-content-between align-items-start mb-1">
-                          <div>
-                            <h6 className="mb-0 fw-bold">{contact.name}</h6>
-                            <small className="text-muted">{contact.email}</small>
+                    <div className="vstack gap-2">
+                      {sortedContacts.map(contact => (
+                        <div
+                          key={contact.id}
+                          className={`card border-0 rounded-3 ${selectedContact?.id === contact.id ? 'bg-primary text-white' : 'bg-light'} cursor-pointer`}
+                          onClick={() => setSelectedContact(contact)}
+                          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                          <div className="card-body p-3">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div className="d-flex align-items-center gap-2">
+                                <div className={`rounded-circle d-flex align-items-center justify-content-center ${selectedContact?.id === contact.id ? 'bg-white' : 'bg-primary'} bg-opacity-10`} 
+                                     style={{ width: '40px', height: '40px' }}>
+                                  <i className={`fas fa-user ${selectedContact?.id === contact.id ? 'text-primary' : 'text-primary'}`}></i>
+                                </div>
+                                <div>
+                                  <h6 className={`mb-0 fw-semibold ${selectedContact?.id === contact.id ? 'text-white' : ''}`}>
+                                    {contact.email}
+                                  </h6>
+                                  <small className={selectedContact?.id === contact.id ? 'text-white-50' : 'text-muted'}>
+                                    {formatDate(contact.date)}
+                                  </small>
+                                </div>
+                              </div>
+                              {contact.status === 'non lu' && (
+                                <span className="badge bg-warning rounded-pill px-2">Nouveau</span>
+                              )}
+                            </div>
+                            
+                            <p className={`mb-0 small ${selectedContact?.id === contact.id ? 'text-white' : 'text-muted'}`}>
+                              <i className="fas fa-tag me-1"></i>
+                              <strong>{contact.subject}</strong>
+                            </p>
+                            
+                            <p className={`mb-0 small text-truncate mt-1 ${selectedContact?.id === contact.id ? 'text-white-50' : ''}`}>
+                              {contact.message.substring(0, 80)}...
+                            </p>
+
+                            {contact.replies?.length > 0 && (
+                              <div className="mt-2">
+                                <small className={selectedContact?.id === contact.id ? 'text-white-50' : 'text-success'}>
+                                  <i className="fas fa-reply me-1"></i>
+                                  {contact.replies.length} réponse(s)
+                                </small>
+                              </div>
+                            )}
                           </div>
-                          {contact.status === 'non lu' && (
-                            <span className="badge bg-warning rounded-pill">Nouveau</span>
-                          )}
                         </div>
-                        <p className="mb-1 small text-truncate">{contact.subject}</p>
-                        <small className="text-muted">
-                          <i className="fas fa-clock me-1"></i>
-                          {formatDate(contact.date)}
-                        </small>
-                      </button>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Détail du contact */}
-            <div className="col-md-7 col-lg-8">
+            {/* Colonne de droite - Vue détaillée du message */}
+            <div className="col-lg-7 col-xl-8">
               {selectedContact ? (
                 <div className="card border-0 shadow-sm rounded-4">
-                  <div className="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 className="fw-bold mb-1">{selectedContact.subject}</h5>
-                      <small className="text-muted">
-                        <i className="fas fa-calendar me-1"></i>
-                        {formatDate(selectedContact.date)}
-                      </small>
+                  {/* En-tête du message */}
+                  <div className="card-header bg-white border-0 p-4">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h4 className="fw-bold mb-2">{selectedContact.subject}</h4>
+                        <div className="d-flex flex-wrap gap-3 align-items-center">
+                          <span className="badge bg-light text-dark rounded-pill px-3 py-2">
+                            <i className="fas fa-clock me-1 text-primary"></i>
+                            {formatDate(selectedContact.date)}
+                          </span>
+                          <span className={`badge rounded-pill px-3 py-2 ${
+                            selectedContact.status === 'non lu' ? 'bg-warning' : 
+                            selectedContact.status === 'répondu' ? 'bg-success' : 'bg-secondary'
+                          }`}>
+                            <i className={`fas me-1 ${
+                              selectedContact.status === 'non lu' ? 'fa-circle' : 
+                              selectedContact.status === 'répondu' ? 'fa-check-circle' : 'fa-check'
+                            }`}></i>
+                            {selectedContact.status === 'non lu' ? 'Non lu' : 
+                             selectedContact.status === 'répondu' ? 'Répondu' : 'Lu'}
+                          </span>
+                        </div>
+                      </div>
+                      <button 
+                        className="btn btn-outline-danger btn-sm rounded-pill px-3"
+                        onClick={() => handleDeleteContact(selectedContact.id)}
+                      >
+                        <i className="fas fa-trash-alt me-2"></i>
+                        Supprimer
+                      </button>
                     </div>
-                    <button 
-                      className="btn btn-outline-danger btn-sm rounded-pill"
-                      onClick={() => handleDeleteContact(selectedContact.id)}
-                    >
-                      <i className="fas fa-trash-alt me-2"></i>
-                      Supprimer
-                    </button>
                   </div>
 
-                  <div className="card-body p-4">
-                    {/* Informations de l'expéditeur */}
-                    <div className="bg-light rounded-3 p-3 mb-4">
-                      <div className="d-flex align-items-center gap-3">
-                        <img 
-                          src={selectedContact.avatar || 'https://via.placeholder.com/50'}
-                          className="rounded-circle border"
-                          style={{ width: "50px", height: "50px", objectFit: "cover" }}
-                          alt="avatar"
-                        />
-                        <div>
-                          <h6 className="fw-bold mb-1">{selectedContact.name}</h6>
-                          <p className="mb-0 small">
-                            <i className="fas fa-envelope me-2"></i>
-                            {selectedContact.email}
-                          </p>
+                  <div className="card-body p-4 pt-0">
+                    {/* Carte d'identité de l'expéditeur */}
+                    <div className="bg-light rounded-4 p-4 mb-4">
+                      <div className="row g-4">
+                        <div className="col-md-6">
+                          <div className="d-flex align-items-center gap-3">
+                            <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                 style={{ width: '60px', height: '60px' }}>
+                              <i className="fas fa-user-circle fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                              <h5 className="fw-bold mb-1">{selectedContact.name}</h5>
+                              <p className="text-muted mb-0 small">
+                                <i className="fas fa-envelope me-2"></i>
+                                {selectedContact.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-md-6">
+                          {selectedContact.phone && (
+                            <div className="d-flex align-items-center gap-3">
+                              <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                   style={{ width: '60px', height: '60px' }}>
+                                <i className="fas fa-phone fa-2x text-success"></i>
+                              </div>
+                              <div>
+                                <h6 className="fw-bold mb-1">Téléphone</h6>
+                                <p className="text-muted mb-0">{selectedContact.phone}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Message */}
+                    {/* Corps du message */}
                     <div className="mb-4">
-                      <h6 className="fw-bold mb-2">Message :</h6>
-                      <div className="bg-white border rounded-3 p-3">
-                        <p className="mb-0">{selectedContact.message}</p>
+                      <div className="d-flex align-items-center gap-2 mb-3">
+                        <i className="fas fa-comment-dots text-primary fs-5"></i>
+                        <h6 className="fw-bold mb-0">Message</h6>
+                      </div>
+                      <div className="bg-white border rounded-4 p-4">
+                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
+                          {selectedContact.message}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Réponses existantes */}
+                    {/* Historique des réponses */}
                     {selectedContact.replies?.length > 0 && (
                       <div className="mb-4">
-                        <h6 className="fw-bold text-success mb-2">
-                          <i className="fas fa-reply me-2"></i>
-                          Vos réponses
-                        </h6>
-                        {selectedContact.replies.map(reply => (
-                          <div key={reply.id} className="bg-success bg-opacity-10 rounded-3 p-3 mb-2">
-                            <p className="mb-1">{reply.message}</p>
-                            <small className="text-muted">
-                              {formatDate(reply.date)}
-                            </small>
-                          </div>
-                        ))}
+                        <div className="d-flex align-items-center gap-2 mb-3">
+                          <i className="fas fa-history text-success fs-5"></i>
+                          <h6 className="fw-bold mb-0 text-success">Historique des réponses</h6>
+                        </div>
+                        <div className="vstack gap-3">
+                          {selectedContact.replies.map((reply, index) => (
+                            <div key={reply.id || index} className="bg-success bg-opacity-10 rounded-4 p-4">
+                              <div className="d-flex justify-content-between align-items-center mb-2">
+                                <div className="d-flex align-items-center gap-2">
+                                  <div className="bg-success rounded-circle d-flex align-items-center justify-content-center" 
+                                       style={{ width: '30px', height: '30px' }}>
+                                    <i className="fas fa-user-tie text-white fa-xs"></i>
+                                  </div>
+                                  <strong className="text-success">Vous</strong>
+                                </div>
+                                <small className="text-muted">
+                                  <i className="fas fa-clock me-1"></i>
+                                  {formatDate(reply.date)}
+                                </small>
+                              </div>
+                              <p className="mb-0 ms-4">{reply.message}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     {/* Formulaire de réponse */}
-                    {(!selectedContact.replies || selectedContact.replies.length === 0) && (
-                      <div>
-                        <h6 className="fw-bold mb-2">Répondre :</h6>
+                    <div className="mt-4">
+                      <div className="d-flex align-items-center gap-2 mb-3">
+                        <i className="fas fa-reply text-primary fs-5"></i>
+                        <h6 className="fw-bold mb-0">Répondre à ce message</h6>
+                      </div>
+                      <div className="bg-light rounded-4 p-4">
                         <textarea
-                          className="form-control mb-3"
+                          className="form-control border-0 bg-white mb-3"
                           rows="4"
-                          placeholder="Écrivez votre réponse..."
+                          placeholder="Écrivez votre réponse ici..."
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
+                          style={{ resize: 'vertical' }}
                         ></textarea>
-                        <button 
-                          className="btn btn-primary rounded-pill px-4"
-                          onClick={() => handleReply(selectedContact)}
-                          disabled={!replyText.trim()}
-                        >
-                          <i className="fas fa-paper-plane me-2"></i>
-                          Envoyer la réponse
-                        </button>
+                        <div className="d-flex gap-2 justify-content-end">
+                          <button 
+                            className="btn btn-outline-secondary rounded-pill px-4"
+                            onClick={() => setReplyText("")}
+                            disabled={!replyText.trim()}
+                          >
+                            <i className="fas fa-times me-2"></i>
+                            Effacer
+                          </button>
+                          <button 
+                            className="btn btn-primary rounded-pill px-4"
+                            onClick={() => handleReply(selectedContact)}
+                            disabled={!replyText.trim()}
+                          >
+                            <i className="fas fa-paper-plane me-2"></i>
+                            Envoyer la réponse
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="card border-0 shadow-sm rounded-4 p-5 text-center">
-                  <i className="fas fa-envelope-open-text fa-4x text-muted mb-3"></i>
-                  <h5 className="text-muted">Sélectionnez un message pour voir les détails</h5>
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body d-flex flex-column align-items-center justify-content-center p-5" style={{ minHeight: '500px' }}>
+                    <div className="bg-light rounded-circle d-inline-flex p-5 mb-4">
+                      <i className="fas fa-envelope-open-text fa-4x text-primary"></i>
+                    </div>
+                    <h4 className="text-muted mb-2">Aucun message sélectionné</h4>
+                    <p className="text-muted text-center mb-0">
+                      Cliquez sur un message dans la liste de gauche<br />
+                      pour voir son contenu et y répondre
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -642,7 +809,7 @@ const DashboardPerso = () => {
           <div className="row justify-content-center">
             <div className="col-lg-8">
               <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-                <div className="bg-primary text-white p-4">
+                <div className="bg-gradient-primary text-white p-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
                   <h5 className="fw-bold mb-0">
                     <i className="fas fa-user-circle me-2"></i>
                     Mon Profil
@@ -664,7 +831,9 @@ const DashboardPerso = () => {
                           <label 
                             htmlFor="upload-photo" 
                             className="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 border border-2 border-white"
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', transition: 'all 0.3s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                           >
                             <i className="fas fa-camera text-white"></i>
                           </label>
@@ -679,6 +848,7 @@ const DashboardPerso = () => {
                         {formErrors.image && (
                           <small className="text-danger d-block mt-2">{formErrors.image}</small>
                         )}
+                        <p className="text-muted small mt-2">Cliquez sur l'icône pour changer</p>
                       </div>
 
                       <div className="col-md-8">
@@ -761,7 +931,7 @@ const DashboardPerso = () => {
                         <div className="d-flex gap-2">
                           <button type="submit" className="btn btn-primary flex-grow-1 py-2 rounded-3 fw-bold">
                             <i className="fas fa-save me-2"></i>
-                            Enregistrer
+                            Enregistrer les modifications
                           </button>
                           {isEditing && (
                             <button type="button" className="btn btn-outline-secondary px-4 rounded-3" onClick={handleCancel}>
@@ -779,13 +949,19 @@ const DashboardPerso = () => {
                     <div className="col-sm-6">
                       <div className="bg-light rounded-3 p-3">
                         <small className="text-muted text-uppercase fw-bold">Rôle</small>
-                        <p className="fw-bold mb-0 text-capitalize">{currentUser.role}</p>
+                        <p className="fw-bold mb-0 text-capitalize d-flex align-items-center">
+                          <i className="fas fa-briefcase me-2 text-primary"></i>
+                          {currentUser.role}
+                        </p>
                       </div>
                     </div>
                     <div className="col-sm-6">
                       <div className="bg-light rounded-3 p-3">
                         <small className="text-muted text-uppercase fw-bold">Membre depuis</small>
-                        <p className="fw-bold mb-0">Janvier 2024</p>
+                        <p className="fw-bold mb-0 d-flex align-items-center">
+                          <i className="fas fa-calendar-alt me-2 text-primary"></i>
+                          {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -795,6 +971,46 @@ const DashboardPerso = () => {
           </div>
         )}
       </div>
+
+      {/* Styles supplémentaires */}
+      <style jsx>{`
+        .bg-gradient-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .cursor-pointer {
+          cursor: pointer;
+        }
+        .card {
+          transition: all 0.3s ease;
+        }
+        .card:hover {
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        }
+        .btn {
+          transition: all 0.3s ease;
+        }
+        .btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        textarea.form-control {
+          resize: vertical;
+          min-height: 120px;
+        }
+        textarea.form-control:focus {
+          box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+          border-color: #667eea;
+        }
+        .bg-success.bg-opacity-10 {
+          background-color: rgba(40, 167, 69, 0.1) !important;
+        }
+        .bg-primary.bg-opacity-10 {
+          background-color: rgba(102, 126, 234, 0.1) !important;
+        }
+        .bg-warning.bg-opacity-10 {
+          background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+      `}</style>
     </div>
   );
 };

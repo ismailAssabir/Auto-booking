@@ -47,6 +47,32 @@ export default function LoginPage() {
             <div className="container">
                 <div className="row justify-content-center">
                     <div className="col-md-8 col-lg-6 col-xl-5">
+                        
+                        {/* Bouton retour professionnel */}
+                        <div className="mb-4">
+                            <Link 
+                                to="/" 
+                                className="btn btn-outline-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center shadow-sm"
+                                style={{ 
+                                    transition: 'all 0.3s ease',
+                                    borderWidth: '1.5px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateX(-5px)';
+                                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                                    e.currentTarget.style.borderColor = '#6c757d';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateX(0)';
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                    e.currentTarget.style.borderColor = '#dee2e6';
+                                }}
+                            >
+                                <i className="fas fa-arrow-left me-2"></i>
+                                <span className="fw-medium">Retour à l'accueil</span>
+                            </Link>
+                        </div>
+
                         {/* Logo */}
                         <div className="text-center mb-4">
                             <Link to="/" className="text-decoration-none">
@@ -57,7 +83,7 @@ export default function LoginPage() {
                             </Link>
                             <p className="text-muted">Gérez vos réservations en toute simplicité</p>
                         </div>
-
+                      
                         {/* Card */}
                         <div className="card border-0 shadow rounded-4">
                             <div className="card-body p-4 p-lg-5">
@@ -102,26 +128,14 @@ export default function LoginPage() {
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
                                             />
-                                        </div>
-                                        
-                                        {/* Checkbox pour afficher/masquer le mot de passe */}
-                                        <div className="mt-2">
-                                            <div className="form-check">
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-check-input"
-                                                    id="showPassword"
-                                                    checked={showPassword}
-                                                    onChange={(e) => setShowPassword(e.target.checked)}
-                                                />
-                                                <label 
-                                                    className="form-check-label text-muted small" 
-                                                    htmlFor="showPassword"
-                                                >
-                                                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} me-1`}></i>
-                                                    {showPassword ? 'Masquer' : 'Afficher'} le mot de passe
-                                                </label>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-secondary border-start-0"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                style={{ borderLeft: 'none' }}
+                                            >
+                                                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -132,15 +146,28 @@ export default function LoginPage() {
                                                 Se souvenir de moi
                                             </label>
                                         </div>
-                                        <Link to="/forget" className="text-primary small">
+                                        <Link to="/forget" className="text-primary small text-decoration-none">
                                             Mot de passe oublié ?
                                         </Link>
                                     </div>
 
                                     <button 
                                         type="submit" 
-                                        className="btn btn-primary w-100 py-3 fw-bold rounded-3"
+                                        className="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm"
                                         disabled={isLoading}
+                                        style={{ transition: 'all 0.3s ease' }}
+                                        onMouseEnter={(e) => {
+                                            if (!isLoading) {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isLoading) {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                                            }
+                                        }}
                                     >
                                         {isLoading ? (
                                             <>
@@ -155,7 +182,7 @@ export default function LoginPage() {
                                     <div className="text-center mt-4">
                                         <p className="text-muted mb-0">
                                             Pas encore de compte ?{' '}
-                                            <Link to="/inscription" className="text-primary fw-bold">
+                                            <Link to="/inscription" className="text-primary fw-bold text-decoration-none">
                                                 S'inscrire
                                             </Link>
                                         </p>

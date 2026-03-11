@@ -19,7 +19,6 @@ const InspectionVoiture = () => {
     dispatch(confirmReservation({
       id: Number(resId)
     }));
-
     alert("Inspection de départ enregistrée !");
     navigate("/dashboard/personnel");
   };
